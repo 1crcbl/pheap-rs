@@ -114,19 +114,17 @@ impl<V, P> PairingHeap<V, P> {
     }
 
     /// Deletes the minimum element, which is the root, of the heap.
-    pub fn delete_min(&mut self)
+    pub fn delete_min(&mut self) -> Option<(V, P)>
     where
-        P: PartialOrd,
+        P: PartialOrd + Copy,
+        V: Copy,
     {
-        if let Some(root) = self.root {
-            unsafe {
-                self.len -= 1;
-                let mut targ = (*root.as_ptr()).left.take();
-                if targ.is_none() {
-                    self.root = None;
-                    return;
-                }
-
+        self.root.map(|root| unsafe {
+            self.len -= 1;
+            let mut targ = (*root.as_ptr()).left.take();
+            if targ.is_none() {
+                self.root = None;
+            } else {
                 // TODO: optimise so that capacity is known here.
                 let mut tmp_nodes = VecDeque::new();
 
@@ -158,9 +156,38 @@ impl<V, P> PairingHeap<V, P> {
                     node = Self::merge_nodes(node, node_prev);
                 }
 
-                self.root = node
+                self.root = node;
+            }
+            let node = Box::from_raw(root.as_ptr());
+            node.into_value()
+        })
+    }
+}
+
+impl<K, P> Drop for PairingHeap<K, P> {
+    fn drop(&mut self) {
+        // Remove all children of a node, then the node itself.
+        // Returns the next sibling in the end.
+        unsafe fn remove<K, P>(targ: NonNull<Node<K, P>>) -> Option<NonNull<Node<K, P>>> {
+            while let Some(left) = targ.as_ref().left {
+                (*targ.as_ptr()).left = remove(left);
+            }
+
+            let sibling = (*targ.as_ptr()).right.take();
+            (*targ.as_ptr()).parent = None;
+            (*targ.as_ptr()).left = None;
+            Box::from_raw(targ.as_ptr());
+
+            sibling
+        }
+
+        if let Some(node) = self.root {
+            unsafe {
+                remove(node);
             }
         }
+
+        self.root = None;
     }
 }
 
@@ -177,8 +204,7 @@ struct Node<K, P> {
 }
 
 impl<K, P> Node<K, P> {
-    #[inline]
-    pub fn new(key: K, prio: P) -> Self {
+    fn new(key: K, prio: P) -> Self {
         Self {
             key,
             prio,
@@ -186,5 +212,9 @@ impl<K, P> Node<K, P> {
             left: None,
             right: None,
         }
+    }
+
+    fn into_value(self) -> (K, P) {
+        (self.key, self.prio)
     }
 }

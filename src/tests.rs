@@ -1,25 +1,23 @@
-
 #[cfg(test)]
 use super::PairingHeap;
 
-
 #[cfg(test)]
-fn create_heap(start: i32, end: i32) -> PairingHeap<String, i32> {
-    let mut ph = PairingHeap::<String, i32>::new();
+fn create_heap(start: i32, end: i32) -> PairingHeap<i32, i32> {
+    let mut ph = PairingHeap::<i32, i32>::new();
     for ii in start..end {
-        ph.insert(ii.to_string(), ii);
+        ph.insert(ii, ii);
     }
     ph
 }
 
 #[test]
 fn create_insert() {
-    let mut ph = PairingHeap::<String, i32>::new();
+    let mut ph = PairingHeap::<i32, i32>::new();
     assert_eq!(0, ph.len());
     assert!(ph.is_empty());
 
     for ii in 1..=10 {
-        ph.insert(ii.to_string(), ii);
+        ph.insert(ii, ii);
     }
 
     assert_eq!(10, ph.len());
@@ -34,12 +32,12 @@ fn find_min() {
     let ph = create_heap(1, 11);
     let min = ph.find_min();
     assert!(min.is_some());
-    assert_eq!("1", &min.unwrap());
+    assert_eq!(1, min.unwrap());
 
     let min_prio = ph.find_min_with_prio();
     assert!(min_prio.is_some());
     let (k, p) = min_prio.unwrap();
-    assert_eq!("1", &k);
+    assert_eq!(1, k);
     assert_eq!(1, p);
 }
 
@@ -55,7 +53,7 @@ fn merge() {
     let min_prio = ph.find_min_with_prio();
     assert!(min_prio.is_some());
     let (k, p) = min_prio.unwrap();
-    assert_eq!("1", &k);
+    assert_eq!(1, k);
     assert_eq!(1, p);
 }
 

@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["html_reports"] }
+priority-queue = "1.1.1"
+keyed_priority_queue = "0.3.2"
+
+[[bench]]
+name = "heap"
+harness = false
