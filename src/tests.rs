@@ -72,7 +72,8 @@ fn delete_min() {
         assert_eq!(tracker, p);
         tracker += 1;
 
-        ph.delete_min();
+        let del_prio = ph.delete_min();
+        assert_eq!(min_prio, del_prio);
 
         len = ph.len();
     }

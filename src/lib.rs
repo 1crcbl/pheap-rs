@@ -7,7 +7,7 @@
     broken_intra_doc_links
 )]
 
-mod pheap;
-pub use pheap::PairingHeap;
+mod ph;
+pub use ph::PairingHeap;
 
 mod tests;

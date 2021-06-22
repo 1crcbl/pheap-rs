@@ -1,7 +1,15 @@
 [package]
-name = "pheap-rs"
+name = "pheap"
 version = "0.1.0"
 edition = "2018"
+
+license = "MIT OR Apache-2.0"
+
+readme = "README.md"
+description = "A (quite fast) implementation of pairing heap data structure"
+
+keywords = ["heap", "priority", "queue", "pairing"]
+categories = ["algorithms", "data-structures"]
 
 [dependencies]
 
@@ -9,6 +17,8 @@ edition = "2018"
 criterion = { version = "0.3", features = ["html_reports"] }
 priority-queue = "1.1.1"
 keyed_priority_queue = "0.3.2"
+addressable-pairing-heap = "0.2.0"
+pairing-heap = "0.1.0"
 
 [[bench]]
 name = "heap"
