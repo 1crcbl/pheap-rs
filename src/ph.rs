@@ -7,12 +7,6 @@ pub struct PairingHeap<V, P> {
     len: usize,
 }
 
-impl<V, P> Default for PairingHeap<V, P> {
-    fn default() -> Self {
-        Self { root: None, len: 0 }
-    }
-}
-
 impl<V, P> PairingHeap<V, P> {
     /// Creates an empty pairing heap.
     #[inline]
@@ -59,7 +53,9 @@ impl<V, P> PairingHeap<V, P> {
 
     /// Merges two heaps together and forms a new heap.
     ///
-    /// If one heap is empty, the other heap will be returned and vice versa. Otherwise, [...]
+    /// If one heap is empty, the other heap will be returned and vice versa. Otherwise, a new heap
+    /// will be created, whose root is the root that has a smaller value. The other root will be
+    /// inserted in the new heap.
     #[inline]
     pub fn merge(self, other: Self) -> Self
     where
@@ -161,6 +157,12 @@ impl<V, P> PairingHeap<V, P> {
             let node = Box::from_raw(root.as_ptr());
             node.into_value()
         })
+    }
+}
+
+impl<V, P> Default for PairingHeap<V, P> {
+    fn default() -> Self {
+        Self { root: None, len: 0 }
     }
 }
 

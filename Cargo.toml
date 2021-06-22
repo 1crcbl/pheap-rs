@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 readme = "README.md"
-description = "A (quite fast) implementation of pairing heap data structure"
+description = "A (ok-ish fast) implementation of pairing heap data structure for priority queue"
 
 keywords = ["heap", "priority", "queue", "pairing"]
 categories = ["algorithms", "data-structures"]
