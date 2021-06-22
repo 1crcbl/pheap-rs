@@ -2,14 +2,19 @@
 name = "pheap"
 version = "0.1.0"
 edition = "2018"
-
+authors = ["1crcbl <1crcbl@protonmail.com>"]
 license = "MIT OR Apache-2.0"
+exclude = [
+    "img/*",
+]
 
 readme = "README.md"
 description = "A (ok-ish fast) implementation of pairing heap data structure for priority queue"
 
 keywords = ["heap", "priority", "queue", "pairing"]
 categories = ["algorithms", "data-structures"]
+
+repository = "https://github.com/1crcbl/pheap-rs"
 
 [dependencies]
 

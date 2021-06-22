@@ -72,7 +72,7 @@ fn delete_min() {
         tracker += 1;
 
         let del_prio = ph.delete_min();
-        assert!(del_prio.is_none());
+        assert!(del_prio.is_some());
         let (kt, pt) = del_prio.unwrap();
         assert_eq!(k, kt);
         assert_eq!(p, pt);

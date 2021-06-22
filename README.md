@@ -1,5 +1,7 @@
 # Pairing Heap
 
+[![Crates.io](https://img.shields.io/crates/v/pheap)](https://crates.io/crates/pheap) [![Documentation](https://docs.rs/pheap/badge.svg)](https://docs.rs/pheap) 
+
 From [Wikipedia](https://en.wikipedia.org/wiki/Pairing_heap):
 > A pairing heap is a type of heap data structure with relatively simple implementation and excellent practical amortized performance.
 > Pairing heaps are heap-ordered multiway tree structures, and can be considered simplified Fibonacci heaps. They are considered a "robust choice" for implementing such algorithms as Prim's MST algorithm.
@@ -55,8 +57,15 @@ cargo build --examples --release
 
 To run valgrind:
 ```batch
-valgrind --tool=massif ./target/release/examples/stress <implementation> 1000000
+valgrind --tool=massif ./target/release/examples/stress <implementation> <number of nodes to be inserted>
 ```
+
+The commandline argument ```<implementation>``` accepts the following options:
+- ```pairing_heap```
+- ```priority_queue```
+- ```keyed_priority_queue```
+- ```addressable_pairing_heap```
+- ```ap422_pairing_heap```
 
 |  | Pairing heap<br>(this crate)  | Addressable pairing heap | Pairing heap <br>(Apasel422) | Priority queue | Keyed priority queue
 --- | --- | --- | --- | --- | ---
