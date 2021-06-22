@@ -1,13 +1,13 @@
-use std::{collections::VecDeque, ptr::NonNull};
+use std::{collections::VecDeque, ops::SubAssign, ptr::NonNull};
 
-/// Min-heap data structure
+/// A min-pairing heap data structure.
 #[derive(Debug)]
-pub struct PairingHeap<V, P> {
-    root: Option<NonNull<Node<V, P>>>,
+pub struct PairingHeap<K, P> {
+    root: Option<NonNull<Node<K, P>>>,
     len: usize,
 }
 
-impl<V, P> PairingHeap<V, P> {
+impl<K, P> PairingHeap<K, P> {
     /// Creates an empty pairing heap.
     #[inline]
     pub fn new() -> Self {
@@ -26,26 +26,13 @@ impl<V, P> PairingHeap<V, P> {
         self.len == 0
     }
 
-    /// Returns the minimum element, which is the root element, of the heap.
-    #[inline]
-    pub fn find_min(&self) -> Option<V>
-    where
-        V: Clone,
-    {
-        unsafe { self.root.map(|node| node.as_ref().key.clone()) }
-    }
-
     /// Returns the minimum element, which is the root element, and its priority in a tuple of the heap.
     #[inline]
-    pub fn find_min_with_prio(&self) -> Option<(V, P)>
-    where
-        V: Clone,
-        P: Clone,
-    {
+    pub fn find_min(&self) -> Option<(&K, &P)> {
         match self.root {
             Some(node) => unsafe {
                 let r = node.as_ref();
-                Some((r.key.clone(), r.prio.clone()))
+                Some((&r.key, &r.prio))
             },
             None => None,
         }
@@ -69,9 +56,9 @@ impl<V, P> PairingHeap<V, P> {
 
     #[inline]
     fn merge_nodes(
-        node1: Option<NonNull<Node<V, P>>>,
-        node2: Option<NonNull<Node<V, P>>>,
-    ) -> Option<NonNull<Node<V, P>>>
+        node1: Option<NonNull<Node<K, P>>>,
+        node2: Option<NonNull<Node<K, P>>>,
+    ) -> Option<NonNull<Node<K, P>>>
     where
         P: PartialOrd,
     {
@@ -91,7 +78,7 @@ impl<V, P> PairingHeap<V, P> {
     }
 
     #[inline(always)]
-    unsafe fn meld(node1: NonNull<Node<V, P>>, node2: NonNull<Node<V, P>>) -> NonNull<Node<V, P>> {
+    unsafe fn meld(node1: NonNull<Node<K, P>>, node2: NonNull<Node<K, P>>) -> NonNull<Node<K, P>> {
         (*node2.as_ptr()).parent = Some(node1);
         (*node2.as_ptr()).right = node1.as_ref().left;
         (*node1.as_ptr()).left = Some(node2);
@@ -100,20 +87,87 @@ impl<V, P> PairingHeap<V, P> {
 
     /// Inserts a new element to the heap.
     #[inline]
-    pub fn insert(&mut self, key: V, prio: P)
+    pub fn insert(&mut self, key: K, prio: P)
     where
         P: PartialOrd,
     {
         let node = NonNull::new(Box::leak(Box::new(Node::new(key, prio))));
+
         self.root = Self::merge_nodes(self.root, node);
         self.len += 1;
     }
 
-    /// Deletes the minimum element, which is the root, of the heap.
-    pub fn delete_min(&mut self) -> Option<(V, P)>
+    /// Decreases the priority of a key by the amount given in ```delta```.
+    pub fn decrease_prio(&mut self, key: &K, delta: P)
     where
-        P: PartialOrd + Copy,
-        V: Copy,
+        K: PartialEq,
+        P: PartialOrd + SubAssign,
+    {
+        if let Some(root) = self.root {
+            unsafe {
+                if &root.as_ref().key == key {
+                    (*root.as_ptr()).prio -= delta;
+                    return;
+                }
+
+                let mut targ = None;
+                let mut prev = None;
+                let mut tmp_nodes = VecDeque::with_capacity(self.len << 2);
+                let mut traverse = root.as_ref().left;
+
+                while let Some(node) = traverse {
+                    if &node.as_ref().key == key {
+                        targ = traverse;
+                        break;
+                    }
+
+                    prev = traverse;
+                    tmp_nodes.push_back(traverse);
+
+                    if node.as_ref().right.is_some() {
+                        traverse = node.as_ref().right;
+                    } else {
+                        while let Some(front) = tmp_nodes.pop_front() {
+                            traverse = front.unwrap().as_ref().left;
+                            if traverse.is_some() {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if let Some(node) = targ {
+                    // Every node must have a parent. So unwrap() here shouldn't panic.
+                    let parent = node.as_ref().parent.unwrap();
+                    (*node.as_ptr()).prio -= delta;
+
+                    if parent.as_ref().prio < node.as_ref().prio {
+                        return;
+                    }
+
+                    if parent.as_ref().left == targ {
+                        (*parent.as_ptr()).left = node.as_ref().right;
+                    }
+
+                    if let Some(prev_node) = prev {
+                        if prev_node.as_ref().right == targ {
+                            (*prev_node.as_ptr()).right = node.as_ref().right;
+                        }
+                    }
+
+                    (*node.as_ptr()).parent = None;
+                    (*node.as_ptr()).right = None;
+
+                    self.root = Self::merge_nodes(self.root, targ);
+                }
+            }
+        }
+    }
+
+    /// Deletes the minimum element, which is the root, of the heap, and then returns the root's key value and priority.
+    pub fn delete_min(&mut self) -> Option<(K, P)>
+    where
+        P: PartialOrd,
     {
         self.root.map(|root| unsafe {
             self.len -= 1;
@@ -160,7 +214,7 @@ impl<V, P> PairingHeap<V, P> {
     }
 }
 
-impl<V, P> Default for PairingHeap<V, P> {
+impl<K, P> Default for PairingHeap<K, P> {
     fn default() -> Self {
         Self { root: None, len: 0 }
     }
