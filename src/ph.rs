@@ -249,14 +249,14 @@ impl<K, P> Drop for PairingHeap<K, P> {
 
 #[derive(Debug)]
 struct Node<K, P> {
-    key: K,
-    prio: P,
     /// Pointer to a node's parent.
     parent: Option<NonNull<Node<K, P>>>,
     /// Pointer to a node's first (or left-most) child.
     left: Option<NonNull<Node<K, P>>>,
     /// Pointer to a node's next older sibling.
     right: Option<NonNull<Node<K, P>>>,
+    key: K,
+    prio: P,
 }
 
 impl<K, P> Node<K, P> {

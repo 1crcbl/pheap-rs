@@ -17,6 +17,7 @@ categories = ["algorithms", "data-structures"]
 repository = "https://github.com/1crcbl/pheap-rs"
 
 [dependencies]
+num-traits = "0.2.14"
 
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"] }
@@ -24,6 +25,7 @@ priority-queue = "1.1.1"
 keyed_priority_queue = "0.3.2"
 addressable-pairing-heap = "0.2.0"
 pairing-heap = "0.1.0"
+clap = "2.33.3"
 
 [[bench]]
 name = "heap"

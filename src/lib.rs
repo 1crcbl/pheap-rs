@@ -21,4 +21,7 @@
 mod ph;
 pub use ph::PairingHeap;
 
+mod exp;
+pub use exp::graph;
+
 mod tests;
