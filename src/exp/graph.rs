@@ -6,10 +6,9 @@ use crate::PairingHeap;
 
 /// A simple and undirected graph.
 ///
-/// A simple graph assumes that nodes' index starts from ```0``` and is not equipped with a hash map
+/// A simple graph assumes that the node indexing starts from ```0``` and is not equipped with a hash map
 /// for a mapping from external complex objects to internal graph indices. As a result, [`SimpleGraph`]
-/// doesn't have no runtime overhead for such object storage and mapping and suits for cases where
-/// simple indices are enough.
+/// doesn't have no runtime overhead for such object storage and mapping.
 ///
 /// # Examples
 /// The following example shows how to construct a graph and find the shortest path between node 1 and 5.
@@ -31,6 +30,7 @@ use crate::PairingHeap;
 /// g.add_weighted_edges(3, 4, 6);
 /// g.add_weighted_edges(4, 5, 9);
 ///
+/// // Finds an SSSP from 0 to 4.
 /// let mut sp = g.sssp_dijkstra(0, &[4]);
 /// assert_eq!(1, sp.len());
 ///
@@ -42,12 +42,17 @@ use crate::PairingHeap;
 /// g.add_weighted_edges(6, 7, 2);
 /// g.add_weighted_edges(6, 8, 3);
 ///
-/// let mut sp = g.sssp_dijkstra(0, &[7]);
-/// assert_eq!(1, sp.len());
-/// let sp = sp.pop().unwrap();
-/// // The path 0 -> 7 should be infeasible.
+/// // Finds an SSSP starting from 0. The result can be used for later query.
+/// let lsp = g.sssp_dijkstra_lazy(0);
+/// let lsp = g.sssp_dijkstra_lazy(0);
+/// let sp = lsp.get(7);
 /// assert_eq!(false, sp.is_feasible());
-/// assert_eq!(0, sp.dist());
+///
+/// let sp = lsp.get(4);
+/// assert_eq!(true, sp.is_feasible());
+/// assert_eq!(20, sp.dist());
+/// assert_eq!(&[0, 2, 5, 4], sp.path().as_slice());
+
 ///
 /// ```
 ///
@@ -327,7 +332,9 @@ struct DijNode<W> {
     pred: usize,
     /// Flag whether a node is visisted or not.
     len: usize,
+    /// Flag indicating whether the node is already visisted or not.
     visited: bool,
+    /// Flag indicating whether a path from source node is feasible.
     feasible: bool,
     /// Distance to the predecessor.
     dist: W,

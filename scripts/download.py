@@ -69,6 +69,24 @@ dimacs_distance = {
     ],
 }
 
+
+def download_dimacs(dataset):
+    url_dl, gz_name, filename = dimacs_distance[dataset]
+    gz_dest = os.path.join(args.dest, gz_name)
+    file_dest = os.path.join(args.dest, filename)
+    
+    if not os.path.exists(file_dest) or not os.path.isfile(file_dest):
+        print("> Download file: {}...".format(url_dl))
+
+        urllib.request.urlretrieve(url_dl, gz_dest)
+
+        with gzip.open(gz_dest, 'rb') as f_in:
+            with open(file_dest, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+    print("> Dataset is ready at {}".format(file_dest))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download datasets.")
     parser.add_argument('-d', '--dataset', required=True, help="Dataset to be downloaded", metavar="Dataset")
@@ -79,20 +97,11 @@ if __name__ == "__main__":
     if not os.path.exists(args.dest):
         os.makedirs(args.dest)
 
-    if args.dataset.startswith("dimacs"):
-        url_dl, gz_name, filename = dimacs_distance[args.dataset]
-        gz_dest = os.path.join(args.dest, gz_name)
-        file_dest = os.path.join(args.dest, filename)
-        
-        if not os.path.exists(file_dest) or not os.path.isfile(file_dest):
-            print("> Download file: {}...".format(url_dl))
-
-            urllib.request.urlretrieve(url_dl, gz_dest)
-
-            with gzip.open(gz_dest, 'rb') as f_in:
-                with open(file_dest, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-
-        print("> Dataset is ready at {}".format(file_dest))
-
+    ds = args.dataset
+    if ds.startswith("dimacs"):
+        if ds == "dimacs-all":
+            for k in dimacs_distance:
+                download_dimacs(k)
+        else:
+            download_dimacs(ds)
         

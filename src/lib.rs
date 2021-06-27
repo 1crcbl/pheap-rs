@@ -11,6 +11,11 @@
 //! - ```insert```: adds a new element into the heap.
 //! - ```delete_min```: remove the root and reorder its children nodes.
 //! - ```decrease_key```: decrease the priority of an element. Standard implementation of a heap data structure does not support searching for a key efficiently (which is the case in this crate). Thus, this operation can take very long time, with an upper bound of ```O(2^(sqrt(log log n)))```.
+//!
+//! One usage of heap data structure is in Dijkstra's algorithm. With [`PairingHeap`], the crate
+//! provides a fast implementation for this algorithm to solve the problem of single source shortest
+//! path. See [`graph::SimpleGraph`] for more info.
+//!
 #![warn(
     missing_docs,
     rust_2018_idioms,

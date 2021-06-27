@@ -13,6 +13,8 @@ A min-pairing heap supports the following operations:
 - ```delete_min```: remove the root and reorder its children nodes.
 - ```decrease_key```: decrease the priority of an element. Standard implementation of a heap data structure does not support searching for a key efficiently (which is the case in this crate). Thus, this operation can take very long time, with an upper bound of ```O(2^(sqrt(log log n)))```.
 
+The crate also comes with an efficient implementation of Dijkstra's algorithm to solve the single source shortest path problem.
+
 ## Benchmarks
 To measure the performance of this implementation, I choose the following libraries that are available on [crates.io](https://crates.io/) to experiment:
 - [Addressable pairing heap](https://crates.io/crates/addressable-pairing-heap)
@@ -23,9 +25,9 @@ To measure the performance of this implementation, I choose the following librar
 *If I miss any libraries, please let me know.*
 
 The experiments are conducted on my PC with the following spec:
-> OS: Fedora 34 64-<bit
-> CPU: AMD® Ryzen 7 3800x 8-core processor 
-> RAM: 32 GB
+> OS: Fedora 34 64-bit  
+> CPU: AMD® Ryzen 7 3800x 8-core processor   
+> RAM: 32 GB  
 
 ### Experiment 1
 > Each implementation is tasked to execute 1000 insertions / 0 deletes, then 999 insertions / 1 deletes (remove the top element), until the number of deletes is 1000. This means each implementation has to execute 500_500 insertions and 500_500 deletions.
@@ -72,6 +74,37 @@ The commandline argument ```<implementation>``` accepts the following options:
 |Peak heap<br>memory consumption<br> (MB)|30.5|72.0|segfault|62|76|
 
 The image outputs of ```massif-visualiser``` are stored in the folder ```img```.
+
+## Dijkstra's algorithm
+To test the performance of Dijkstra's algorithm with pairing heap, I use the [DIMACS dataset](http://www.diag.uniroma1.it/challenge9/download.shtml). You can download all datasets by using the python script with the following command:
+
+```python
+python3 scripts/download.py -d dimacs-all --dest data/
+```
+
+On [crates.io](https://crates.io/) there are several libraries that have Dijkstra's algorithm but I only find the crate [`pathfinding`](https://crates.io/crates/pathfinding) performant (please let me know if I miss any crate).
+
+For this experiment, all implementations are tasked to solve the shortest path problem on all DIMACS dataset and I take the average runtime after ten runs.
+
+**Note:** the function `dijkstra_all` of `pathfinding` returns only the direct parent node for a queried node, instead of an entire path, the function `sssp_dijkstra_lazy` is used for my implementation of Dijkstra's algorithm. This function returns a result which is (kind of) equivalent to what `pathfinding` delivers. By doing so, we can compare the solving time of both implementations, while ignoring the path building time.
+
+Time is measured in millisecond:
+
+|  | Number of nodes | Number of edges | pheap  | pathfinding
+--- | --- | --- | --- | --- |
+|DIMACS-NY| 264_346 | 733_846 | 88 |110|
+|DIMACS-BAY| 321_270 | 800_172 | 94 |127|
+|DIMACS-COL| 435_666 | 1_057_066 | 126 |172|
+|DIMACS-FLA| 1_070_376 | 2_712_798 | 377 |626|
+|DIMACS-NW| 1_207_945 | 2_840_208 | 456 |665|
+|DIMACS-NE| 1_524_453 | 3_897_636 | 619 |852|
+|DIMACS-CAL| 1_890_815 | 4_657_742 | 740 |1246|
+|DIMACS-LKS| 2_758_119 | 6_885_658 | 1141 |1695|
+|DIMACS-E| 3_598_623 | 8_778_114 | 1548 |2151|
+|DIMACS-W| 6_262_104 | 15_248_146 | 3098 |4460|
+|DIMACS-CTR| 14_081_816 | 34_292_496 | 10183 |11256|
+|DIMACS-USA| 23_947_347 | 58_333_344 | 16678 |20896|
+
 
 ## License
 

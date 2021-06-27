@@ -9,9 +9,9 @@ exclude = [
 ]
 
 readme = "README.md"
-description = "A (ok-ish fast) implementation of pairing heap data structure for priority queue"
+description = "A (fast) implementation of pairing heap data structure for priority queue and Dijkstra for shortest path problems"
 
-keywords = ["heap", "priority", "queue", "pairing"]
+keywords = ["heap", "priority", "queue", "pairing", "shortest path", "Dijkstra"]
 categories = ["algorithms", "data-structures"]
 
 repository = "https://github.com/1crcbl/pheap-rs"
