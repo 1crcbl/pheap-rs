@@ -52,7 +52,6 @@ use crate::PairingHeap;
 /// assert_eq!(true, sp.is_feasible());
 /// assert_eq!(20, sp.dist());
 /// assert_eq!(&[0, 2, 5, 4], sp.path().as_slice());
-
 ///
 /// ```
 ///
