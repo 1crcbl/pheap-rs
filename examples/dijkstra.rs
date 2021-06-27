@@ -1,13 +1,15 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
 };
 
 use clap::{App, Arg};
-use pheap::graph::Graph;
+use pathfinding::prelude::dijkstra_all;
+use pheap::graph::SimpleGraph;
 
 fn main() {
-    let matches = App::new("simct benchmark")
+    let matches = App::new("Single source shortest path benchmark")
         .arg(
             Arg::with_name("file")
                 .short("f")
@@ -47,10 +49,31 @@ fn main() {
     match matches.value_of("lib") {
         Some(lib) => match lib {
             "pheap" => graph(filepath, runs),
-            "fast_paths" => fast_paths(filepath, runs),
+            "pathfinding" => pathfinding(filepath, runs),
             _ => std::process::exit(1),
         },
         None => std::process::exit(1),
+    };
+}
+
+macro_rules! run_exp {
+    ($runs:expr, $exe:stmt) => {
+        let mut durations = Vec::with_capacity($runs);
+
+        for ii in 0..$runs {
+            println!("> Run {}/{}", ii + 1, $runs);
+            let start = std::time::Instant::now();
+            $exe
+            let end = std::time::Instant::now() - start;
+            println!(
+                "> Time taken to solve the problem: {} (ms)",
+                end.as_millis()
+            );
+            durations.push(end.as_millis());
+        }
+
+        let avg = durations.iter().sum::<u128>() as usize;
+        println!("Average time: {} (ms)", avg / $runs);
     };
 }
 
@@ -61,7 +84,7 @@ fn graph(filepath: &str, runs: usize) {
     let mut reader = BufReader::new(file);
 
     let mut n_nodes = 0;
-    let mut n_edges = 0;
+    let mut _n_edges = 0;
 
     for _ in 0..7 {
         let mut line = String::new();
@@ -70,90 +93,68 @@ fn graph(filepath: &str, runs: usize) {
         if !line.is_empty() && line.starts_with('p') {
             let s = line.trim().split_whitespace().collect::<Vec<&str>>();
             n_nodes = s[2].parse::<usize>().unwrap();
-            n_edges = s[3].parse::<usize>().unwrap();
+            _n_edges = s[3].parse::<usize>().unwrap();
         }
     }
 
-    let mut g = Graph::<u32>::with_size(n_nodes, n_edges);
+    let mut g = SimpleGraph::<u32>::with_capacity(n_nodes);
 
     for line in reader.lines() {
-        let line = line.unwrap();
-        let s = line.trim().split_whitespace().collect::<Vec<&str>>();
-        let node1 = s[1].parse::<usize>().unwrap() - 1;
-        let node2 = s[2].parse::<usize>().unwrap() - 1;
-        let weight = s[3].parse::<u32>().unwrap();
-
+        let (node1, node2, weight) = parse_line(&line.unwrap());
         g.add_weighted_edges(node1, node2, weight);
     }
 
     println!("> Graph created.");
 
-    let mut durations = Vec::with_capacity(runs);
-
-    for ii in 0..runs {
-        println!("> Run {}/{}", ii + 1, runs);
-        let start = std::time::Instant::now();
-        let _ = g.sssp_dijkstra(10_000, None);
-        let end = std::time::Instant::now() - start;
-        println!(
-            "> Time taken to solve the problem: {} (ms)",
-            end.as_millis()
-        );
-        durations.push(end.as_millis());
-    }
-
-    let avg = durations.iter().sum::<u128>() as usize;
-    println!("Average time: {} (ms)", avg / runs);
+    run_exp!(runs, let _ = g.sssp_dijkstra_lazy(10_000));
 }
 
-fn fast_paths(filepath: &str, runs: usize) {
+fn pathfinding(filepath: &str, runs: usize) {
     println!("> Load file: {}", filepath);
 
     let file = File::open(filepath).unwrap();
     let mut reader = BufReader::new(file);
 
-    let mut n_nodes = 0;
-    let mut n_edges = 0;
-
     for _ in 0..7 {
         let mut line = String::new();
         reader.read_line(&mut line).unwrap();
+    }
 
-        if !line.is_empty() && line.starts_with('p') {
-            let s = line.trim().split_whitespace().collect::<Vec<&str>>();
-            n_nodes = s[2].parse::<usize>().unwrap();
-            n_edges = s[3].parse::<usize>().unwrap();
+    fn insert_weight(
+        hm: &mut HashMap<usize, Vec<(usize, u32)>>,
+        node1: usize,
+        node2: usize,
+        weight: u32,
+    ) {
+        match hm.get_mut(&node1) {
+            Some(v) => {
+                v.push((node2, weight));
+            }
+            None => {
+                let v = vec![(node2, weight)];
+                hm.insert(node1, v);
+            }
         }
     }
 
-    let mut g = Graph::<u32>::with_size(n_nodes, n_edges);
+    let mut hm = HashMap::<usize, Vec<(usize, u32)>>::new();
 
     for line in reader.lines() {
-        let line = line.unwrap();
-        let s = line.trim().split_whitespace().collect::<Vec<&str>>();
-        let node1 = s[1].parse::<usize>().unwrap() - 1;
-        let node2 = s[2].parse::<usize>().unwrap() - 1;
-        let weight = s[3].parse::<u32>().unwrap();
-
-        g.add_weighted_edges(node1, node2, weight);
+        let (node1, node2, weight) = parse_line(&line.unwrap());
+        insert_weight(&mut hm, node1, node2, weight);
+        insert_weight(&mut hm, node2, node1, weight);
     }
 
-    println!("> Graph created.");
+    run_exp!(runs, let _ = dijkstra_all(&0, |x| {
+        let nbs = hm.get(x).unwrap();
+        nbs.iter().map(|(idx, w)| (*idx, *w))
+    }));
+}
 
-    let mut durations = Vec::with_capacity(runs);
-
-    for ii in 0..runs {
-        println!("> Run {}/{}", ii + 1, runs);
-        let start = std::time::Instant::now();
-        let _ = g.sssp_dijkstra(10_000, None);
-        let end = std::time::Instant::now() - start;
-        println!(
-            "> Time taken to solve the problem: {} (ms)",
-            end.as_millis()
-        );
-        durations.push(end.as_millis());
-    }
-
-    let avg = durations.iter().sum::<u128>() as usize;
-    println!("Average time: {} (ms)", avg / runs);
+fn parse_line(line: &str) -> (usize, usize, u32) {
+    let s = line.trim().split_whitespace().collect::<Vec<&str>>();
+    let node1 = s[1].parse::<usize>().unwrap() - 1;
+    let node2 = s[2].parse::<usize>().unwrap() - 1;
+    let weight = s[3].parse::<u32>().unwrap();
+    (node1, node2, weight)
 }

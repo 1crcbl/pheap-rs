@@ -26,6 +26,7 @@ keyed_priority_queue = "0.3.2"
 addressable-pairing-heap = "0.2.0"
 pairing-heap = "0.1.0"
 clap = "2.33.3"
+pathfinding = "2.1.5"
 
 [[bench]]
 name = "heap"
