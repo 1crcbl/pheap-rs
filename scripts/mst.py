@@ -1,7 +1,7 @@
 import networkx as nx
 import time
 
-def dijkstra(filepath, runs):
+def mst(filepath, runs):
     print("> Parse file: {}".format(filepath))
     G = nx.Graph()
 
@@ -23,10 +23,9 @@ def dijkstra(filepath, runs):
 
     for irun in range(runs):
         start = time.time()
-        a = nx.single_source_dijkstra(G, 10000, 1)
+        a = nx.minimum_spanning_tree(G)
         end = time.time() - start
         print("Run {}: {} seconds".format(irun, end))
-        print(a)
 
 if __name__ == "__main__":
-    0
+    mst("/home/qgram/projects/pheap-rs/data/dimacs-ny.gr", 1)

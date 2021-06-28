@@ -1,13 +1,12 @@
-#[cfg(test)]
+#![cfg(test)]
 use super::PairingHeap;
+use crate::ph::HeapElmt;
 
 #[cfg(test)]
-fn create_heap(start: i32, end: i32) -> PairingHeap<i32, i32> {
+fn create_heap(start: i32, end: i32) -> (PairingHeap<i32, i32>, Vec<HeapElmt<i32, i32>>) {
     let mut ph = PairingHeap::<i32, i32>::new();
-    for ii in start..end {
-        ph.insert(ii, ii);
-    }
-    ph
+    let elmts: Vec<_> = (start..end).map(|ii| ph.insert2(ii, ii)).collect();
+    (ph, elmts)
 }
 
 #[test]
@@ -25,10 +24,10 @@ fn create_insert() {
 
 #[test]
 fn find_min() {
-    let ph = create_heap(0, 0);
+    let (ph, _) = create_heap(0, 0);
     assert!(ph.find_min().is_none());
 
-    let ph = create_heap(1, 11);
+    let (ph, _) = create_heap(1, 11);
     let min = ph.find_min();
     assert!(min.is_some());
     let (k, _) = min.unwrap();
@@ -43,9 +42,9 @@ fn find_min() {
 
 #[test]
 fn merge() {
-    let ph1 = create_heap(1, 11);
+    let (ph1, _) = create_heap(1, 11);
     let len1 = ph1.len();
-    let ph2 = create_heap(11, 21);
+    let (ph2, _) = create_heap(11, 21);
     let len2 = ph2.len();
 
     let ph = ph2.merge(ph1);
@@ -59,7 +58,7 @@ fn merge() {
 
 #[test]
 fn delete_min() {
-    let mut ph = create_heap(1, 11);
+    let (mut ph, _) = create_heap(1, 11);
     let mut len = ph.len();
     let mut tracker = 1;
 
@@ -86,7 +85,7 @@ fn delete_min() {
 
 #[test]
 fn decrease_prio() {
-    let mut ph = create_heap(1, 11);
+    let (mut ph, _) = create_heap(1, 11);
 
     ph.delete_min();
     ph.decrease_prio(&8, 4);
@@ -104,7 +103,43 @@ fn decrease_prio() {
         let del_prio = ph.delete_min();
         assert!(del_prio.is_some());
         let (k, p) = del_prio.unwrap();
-        dbg!(k, p);
+        assert_eq!(
+            key_exp[count], k,
+            "Check key: Expected: {} | Got: {}",
+            key_exp[count], k
+        );
+        assert_eq!(
+            prio_exp[count], p,
+            "Check prio for key {}: Expected: {} | Got: {}",
+            k, prio_exp[count], p
+        );
+
+        len = ph.len();
+        count += 1;
+    }
+}
+
+#[test]
+fn update_prio() {
+    let (mut ph, v) = create_heap(1, 11);
+
+    ph.delete_min();
+
+    ph.update_prio(&v[7], 4);
+    ph.update_prio(&v[5], 3);
+    ph.update_prio(&v[8], 6);
+    ph.update_prio(&v[9], 8);
+
+    let key_exp = vec![2, 6, 3, 8, 4, 5, 9, 7, 10];
+    let prio_exp = vec![2, 3, 3, 4, 4, 5, 6, 7, 8];
+
+    let mut len = ph.len();
+    let mut count = 0;
+
+    while len != 0 {
+        let del_prio = ph.delete_min();
+        assert!(del_prio.is_some());
+        let (k, p) = del_prio.unwrap();
         assert_eq!(
             key_exp[count], k,
             "Check key: Expected: {} | Got: {}",

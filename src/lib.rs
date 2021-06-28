@@ -27,6 +27,7 @@ mod ph;
 pub use ph::PairingHeap;
 
 mod exp;
+pub use exp::alg::mst_prim;
 pub use exp::graph;
 
 mod tests;

@@ -55,10 +55,8 @@ use crate::PairingHeap;
 ///
 /// ```
 ///
-/// To check whether a
 #[derive(Debug, Default)]
 pub struct SimpleGraph<W> {
-    n_nodes: usize,
     n_edges: usize,
     weights: HashMap<usize, Vec<(usize, W)>>,
 }
@@ -67,7 +65,6 @@ impl<W> SimpleGraph<W> {
     /// Creates an empty graph.
     pub fn new() -> Self {
         Self {
-            n_nodes: 0,
             n_edges: 0,
             weights: HashMap::new(),
         }
@@ -76,7 +73,6 @@ impl<W> SimpleGraph<W> {
     /// Creates an empty graph with the given capacitiy of nodes.
     pub fn with_capacity(n_nodes: usize) -> Self {
         Self {
-            n_nodes: 0,
             n_edges: 0,
             weights: HashMap::with_capacity(n_nodes),
         }
@@ -84,7 +80,7 @@ impl<W> SimpleGraph<W> {
 
     /// Returns the number of nodes in the graph.
     pub fn n_nodes(&self) -> usize {
-        self.n_nodes
+        self.weights.len()
     }
 
     /// Returns the number of edges in the graph.
@@ -104,12 +100,12 @@ impl<W> SimpleGraph<W> {
             self.insert_weight(node2, node1, weight);
         }
 
-        self.n_nodes += 1;
         self.n_edges += 2;
     }
 
     /// Returns the neighbours of a node.
-    fn neighbours(&self, node: &usize) -> Option<&Vec<(usize, W)>> {
+    #[inline]
+    pub(crate) fn neighbours(&self, node: &usize) -> Option<&Vec<(usize, W)>> {
         self.weights.get(&node)
     }
 
@@ -152,7 +148,7 @@ impl<W> SimpleGraph<W> {
         let mut pq = PairingHeap::<usize, W>::new();
         pq.insert(src, W::zero());
 
-        let mut nodes = vec![DijNode::<W>::new(); self.n_nodes];
+        let mut nodes = vec![DijNode::<W>::new(); self.weights.len()];
         nodes[src].dist = W::zero();
         let mut len = pq.len();
 

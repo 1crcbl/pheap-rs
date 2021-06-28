@@ -3,7 +3,7 @@ use std::{collections::VecDeque, ops::SubAssign, ptr::NonNull};
 /// A min-pairing heap data structure.
 #[derive(Debug)]
 pub struct PairingHeap<K, P> {
-    root: Option<NonNull<Node<K, P>>>,
+    root: Option<NonNull<Inner<K, P>>>,
     len: usize,
 }
 
@@ -56,9 +56,9 @@ impl<K, P> PairingHeap<K, P> {
 
     #[inline]
     fn merge_nodes(
-        node1: Option<NonNull<Node<K, P>>>,
-        node2: Option<NonNull<Node<K, P>>>,
-    ) -> Option<NonNull<Node<K, P>>>
+        node1: Option<NonNull<Inner<K, P>>>,
+        node2: Option<NonNull<Inner<K, P>>>,
+    ) -> Option<NonNull<Inner<K, P>>>
     where
         P: PartialOrd,
     {
@@ -78,7 +78,10 @@ impl<K, P> PairingHeap<K, P> {
     }
 
     #[inline(always)]
-    unsafe fn meld(node1: NonNull<Node<K, P>>, node2: NonNull<Node<K, P>>) -> NonNull<Node<K, P>> {
+    unsafe fn meld(
+        node1: NonNull<Inner<K, P>>,
+        node2: NonNull<Inner<K, P>>,
+    ) -> NonNull<Inner<K, P>> {
         (*node2.as_ptr()).parent = Some(node1);
         (*node2.as_ptr()).right = node1.as_ref().left;
         (*node1.as_ptr()).left = Some(node2);
@@ -91,10 +94,21 @@ impl<K, P> PairingHeap<K, P> {
     where
         P: PartialOrd,
     {
-        let node = NonNull::new(Box::leak(Box::new(Node::new(key, prio))));
+        self.insert2(key, prio);
+    }
+
+    // Expose HeapElmt to pub, no?
+    #[inline]
+    pub(crate) fn insert2(&mut self, key: K, prio: P) -> HeapElmt<K, P>
+    where
+        P: PartialOrd,
+    {
+        let node = NonNull::new(Box::leak(Box::new(Inner::new(key, prio))));
 
         self.root = Self::merge_nodes(self.root, node);
         self.len += 1;
+
+        HeapElmt { inner: node }
     }
 
     /// Decreases the priority of a key by the amount given in ```delta```.
@@ -164,6 +178,61 @@ impl<K, P> PairingHeap<K, P> {
         }
     }
 
+    // TODO: currently only works when new_prio < prio.
+    pub(crate) fn update_prio(&mut self, node: &HeapElmt<K, P>, new_prio: P)
+    where
+        P: PartialOrd,
+    {
+        unsafe {
+            self.update(node.inner, new_prio);
+        }
+    }
+
+    unsafe fn update(&mut self, targ: Option<NonNull<Inner<K, P>>>, new_prio: P)
+    where
+        P: PartialOrd,
+    {
+        if let Some(node) = targ {
+            match node.as_ref().parent {
+                Some(parent) => {
+                    let mut prev = parent.as_ref().left;
+
+                    while let Some(prev_node) = prev {
+                        if prev_node.as_ref().right == targ {
+                            break;
+                        } else {
+                            prev = prev_node.as_ref().right;
+                        }
+                    }
+
+                    (*node.as_ptr()).prio = new_prio;
+
+                    if parent.as_ref().prio < node.as_ref().prio {
+                        return;
+                    }
+
+                    if parent.as_ref().left == targ {
+                        (*parent.as_ptr()).left = node.as_ref().right;
+                    }
+
+                    if let Some(prev_node) = prev {
+                        if prev_node.as_ref().right == targ {
+                            (*prev_node.as_ptr()).right = node.as_ref().right;
+                        }
+                    }
+
+                    (*node.as_ptr()).parent = None;
+                    (*node.as_ptr()).right = None;
+
+                    self.root = Self::merge_nodes(self.root, targ);
+                }
+                None => {
+                    (*node.as_ptr()).prio = new_prio;
+                }
+            };
+        }
+    }
+
     /// Deletes the minimum element, which is the root, of the heap, and then returns the root's key value and priority.
     pub fn delete_min(&mut self) -> Option<(K, P)>
     where
@@ -224,7 +293,7 @@ impl<K, P> Drop for PairingHeap<K, P> {
     fn drop(&mut self) {
         // Remove all children of a node, then the node itself.
         // Returns the next sibling in the end.
-        unsafe fn remove<K, P>(targ: NonNull<Node<K, P>>) -> Option<NonNull<Node<K, P>>> {
+        unsafe fn remove<K, P>(targ: NonNull<Inner<K, P>>) -> Option<NonNull<Inner<K, P>>> {
             while let Some(left) = targ.as_ref().left {
                 (*targ.as_ptr()).left = remove(left);
             }
@@ -247,19 +316,40 @@ impl<K, P> Drop for PairingHeap<K, P> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct HeapElmt<K, P> {
+    inner: Option<NonNull<Inner<K, P>>>,
+}
+
+impl<K, P> HeapElmt<K, P> {
+    pub(crate) fn is_none(&self) -> bool {
+        self.inner.is_none()
+    }
+
+    pub(crate) fn none(&mut self) {
+        self.inner = None;
+    }
+}
+
+impl<K, P> Default for HeapElmt<K, P> {
+    fn default() -> Self {
+        Self { inner: None }
+    }
+}
+
 #[derive(Debug)]
-struct Node<K, P> {
+struct Inner<K, P> {
     /// Pointer to a node's parent.
-    parent: Option<NonNull<Node<K, P>>>,
+    parent: Option<NonNull<Inner<K, P>>>,
     /// Pointer to a node's first (or left-most) child.
-    left: Option<NonNull<Node<K, P>>>,
+    left: Option<NonNull<Inner<K, P>>>,
     /// Pointer to a node's next older sibling.
-    right: Option<NonNull<Node<K, P>>>,
+    right: Option<NonNull<Inner<K, P>>>,
     key: K,
     prio: P,
 }
 
-impl<K, P> Node<K, P> {
+impl<K, P> Inner<K, P> {
     fn new(key: K, prio: P) -> Self {
         Self {
             key,
