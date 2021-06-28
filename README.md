@@ -98,13 +98,32 @@ Time is measured in millisecond:
 |DIMACS-FLA| 1_070_376 | 2_712_798 | 377 |626|
 |DIMACS-NW| 1_207_945 | 2_840_208 | 456 |665|
 |DIMACS-NE| 1_524_453 | 3_897_636 | 619 |852|
-|DIMACS-CAL| 1_890_815 | 4_657_742 | 740 |1246|
-|DIMACS-LKS| 2_758_119 | 6_885_658 | 1141 |1695|
-|DIMACS-E| 3_598_623 | 8_778_114 | 1548 |2151|
-|DIMACS-W| 6_262_104 | 15_248_146 | 3098 |4460|
-|DIMACS-CTR| 14_081_816 | 34_292_496 | 10183 |11256|
-|DIMACS-USA| 23_947_347 | 58_333_344 | 16678 |20896|
+|DIMACS-CAL| 1_890_815 | 4_657_742 | 740 |1_246|
+|DIMACS-LKS| 2_758_119 | 6_885_658 | 1_141 |1_695|
+|DIMACS-E| 3_598_623 | 8_778_114 | 1_548 |2_151|
+|DIMACS-W| 6_262_104 | 15_248_146 | 3_098 |4_460|
+|DIMACS-CTR| 14_081_816 | 34_292_496 | 10_183 |11_256|
+|DIMACS-USA| 23_947_347 | 58_333_344 | 16_678 |20_896|
 
+## Minimum spanning tree
+In this experiment, I measure the performance of both libraries in finding the MST. However, there are several differences between two crates that are worth mentioning: firstly, while ```pathfinding``` uses Kruskal's algorithm, I implement only the Prim's algorithm using the pairing heap. Secondly, ```pathfinding```'s implementation returns only the iterators of edges and it is the task of users to collect these iterators and (re)construct the MST. On the other hand, my implementation returns the complete graph and total weight of an MST. Thus, I run two experiments for ```pheap```, one solving without building MST, and the other for both solving and building MST.
+
+Average time after ten runs, measured in milliesecond:
+
+|  | Number of nodes | Number of edges | pheap <br> (Solve) | pheap <br> (Solve + Build) | pathfinding
+--- | --- | --- | --- | --- | --- |
+|DIMACS-NY| 264_346 | 733_846 | 78 |140 | 132|
+|DIMACS-BAY| 321_270 | 800_172 | 93 | 170 | 140|
+|DIMACS-COL| 435_666 | 1_057_066 | 132 | 243 | 191|
+|DIMACS-FLA| 1_070_376 | 2_712_798 | 358 | 727 |598|
+|DIMACS-NW| 1_207_945 | 2_840_208 | 409 | 863 | 622|
+|DIMACS-NE| 1_524_453 | 3_897_636 | 565 | 1_144 | 845|
+|DIMACS-CAL| 1_890_815 | 4_657_742 | 715 | 1_553 | 1_148|
+|DIMACS-LKS| 2_758_119 | 6_885_658 | 1_093 | 2_307 | 1_641|
+|DIMACS-E| 3_598_623 | 8_778_114 | 1_452 | 3_100 | 2_125|
+|DIMACS-W| 6_262_104 | 15_248_146 | 2_618 | 5_732 | 4_042|
+|DIMACS-CTR| 14_081_816 | 34_292_496 | 7_371 | 16_470 |9_712|
+|DIMACS-USA| 23_947_347 | 58_333_344 | 11_785 | 25_450 |17_943|
 
 ## License
 
