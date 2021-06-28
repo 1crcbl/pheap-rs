@@ -28,4 +28,4 @@ def mst(filepath, runs):
         print("Run {}: {} seconds".format(irun, end))
 
 if __name__ == "__main__":
-    mst("/home/qgram/projects/pheap-rs/data/dimacs-ny.gr", 1)
+    0

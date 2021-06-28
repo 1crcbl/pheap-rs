@@ -13,7 +13,7 @@ A min-pairing heap supports the following operations:
 - ```delete_min```: remove the root and reorder its children nodes.
 - ```decrease_key```: decrease the priority of an element. Standard implementation of a heap data structure does not support searching for a key efficiently (which is the case in this crate). Thus, this operation can take very long time, with an upper bound of ```O(2^(sqrt(log log n)))```.
 
-The crate also comes with an efficient implementation of Dijkstra's algorithm to solve the single source shortest path problem.
+The crate also comes with an efficient implementation of Dijkstra's algorithm to solve the single source shortest path problem and Prim's algorithm for finding minimum spanning tree.
 
 ## Benchmarks
 To measure the performance of this implementation, I choose the following libraries that are available on [crates.io](https://crates.io/) to experiment:

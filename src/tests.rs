@@ -195,7 +195,7 @@ fn test_dijkstra() {
 
 #[test]
 fn test_mst_prim() {
-    let mut g = SimpleGraph::<u32>::with_capacity(6);
+    let mut g = SimpleGraph::<u32>::new();
 
     g.add_weighted_edges(0, 1, 4);
     g.add_weighted_edges(0, 7, 8);

@@ -1,6 +1,6 @@
 [package]
 name = "pheap"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2018"
 authors = ["1crcbl <1crcbl@protonmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -10,9 +10,9 @@ exclude = [
 ]
 
 readme = "README.md"
-description = "A (fast) implementation of pairing heap data structure for priority queue and Dijkstra for shortest path problems"
+description = "A (fast) implementation of pairing heap data structure for priority queue and some graph algorithms"
 
-keywords = ["heap", "priority", "queue", "pairing", "Dijkstra"]
+keywords = ["pairing", "heap", "priority", "queue", "graph"]
 categories = ["algorithms", "data-structures"]
 
 repository = "https://github.com/1crcbl/pheap-rs"
