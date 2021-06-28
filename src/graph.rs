@@ -1,8 +1,15 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{LineWriter, Write},
+    path::Path,
+};
+
+use std::ops::AddAssign;
 
 use num_traits::{Bounded, Num, Zero};
 
-use crate::PairingHeap;
+use crate::{ph::HeapElmt, PairingHeap};
 
 /// A simple and undirected graph.
 ///
@@ -188,6 +195,31 @@ impl<W> SimpleGraph<W> {
                 self.weights.insert(node1, v);
             }
         }
+    }
+
+    /// Write graph as a list of edges.
+    ///
+    /// Each line contains one edge, following [networkx](https://networkx.org/)'s format:
+    /// ```index 1 index 2 {'weight': {}}```.
+    pub fn write_edgelist<P>(&self, filepath: P) -> std::io::Result<()>
+    where
+        P: AsRef<Path>,
+        W: std::fmt::Display,
+    {
+        let file = File::create(filepath)?;
+        let mut file = LineWriter::new(file);
+
+        for (node_idx, nb) in &self.weights {
+            for (vtx_idx, w) in nb {
+                file.write_all(
+                    format!("{} {} {{'weight': {}}}\n", node_idx, vtx_idx, w).as_bytes(),
+                )?;
+            }
+        }
+
+        file.flush()?;
+
+        Ok(())
     }
 }
 
@@ -384,6 +416,81 @@ where
             dist: <W as Zero>::zero(),
             path: Vec::with_capacity(0),
             feasible: false,
+        }
+    }
+}
+
+/// Find the minimum spanning tree (MST) in a graph using Prim's algorithm. The function returns the
+/// total weight of the MST and a simple graph, whose edges are the MST's edges.
+pub fn mst_prim<W>(graph: &SimpleGraph<W>, src: usize) -> (SimpleGraph<W>, W)
+where
+    W: Copy + PartialOrd + Bounded + Zero + AddAssign,
+{
+    let mut pq = PairingHeap::<usize, W>::new();
+    let mut nodes: Vec<_> = (0..graph.n_nodes())
+        .map(|ii| {
+            let mut node = PrimNode::<W>::new();
+            node.dist = if ii == src {
+                <W as Zero>::zero()
+            } else {
+                <W as Bounded>::max_value()
+            };
+            node.idx = ii;
+            node.heap = pq.insert2(ii, node.dist);
+            node
+        })
+        .collect();
+
+    let mut len = pq.len();
+
+    while len != 0 {
+        let (node, _) = pq.delete_min().unwrap();
+        nodes[node].heap.none();
+
+        if let Some(nb) = graph.neighbours(&node) {
+            for (u, dist) in nb {
+                let primnode = &mut nodes[*u];
+                if !primnode.heap.is_none() && *dist < primnode.dist {
+                    primnode.dist = *dist;
+                    primnode.parent = Some(node);
+                    pq.update_prio(&primnode.heap, primnode.dist);
+                }
+            }
+        }
+
+        len = pq.len();
+    }
+
+    let mut rg = SimpleGraph::<W>::with_capacity(graph.n_nodes());
+    let mut dist = <W as Zero>::zero();
+    for node in nodes {
+        if let Some(p) = node.parent {
+            rg.add_weighted_edges(p, node.idx, node.dist);
+            dist += node.dist;
+        }
+    }
+
+    (rg, dist)
+}
+
+#[derive(Clone, Debug)]
+struct PrimNode<W> {
+    idx: usize,
+    parent: Option<usize>,
+    heap: HeapElmt<usize, W>,
+    dist: W,
+}
+
+impl<W> PrimNode<W> {
+    pub fn new() -> Self
+    where
+        W: Bounded,
+    {
+        Self {
+            idx: 0,
+            parent: None,
+            heap: HeapElmt::<usize, W>::default(),
+            dist: <W as Bounded>::max_value(),
         }
     }
 }

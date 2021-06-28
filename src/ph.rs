@@ -2,7 +2,8 @@ use std::{collections::VecDeque, ops::SubAssign, ptr::NonNull};
 
 /// A min-pairing heap data structure.
 #[derive(Debug)]
-pub struct PairingHeap<K, P> {
+pub struct PairingHeap<K, P> 
+{
     root: Option<NonNull<Inner<K, P>>>,
     len: usize,
 }
@@ -44,12 +45,15 @@ impl<K, P> PairingHeap<K, P> {
     /// will be created, whose root is the root that has a smaller value. The other root will be
     /// inserted in the new heap.
     #[inline]
-    pub fn merge(self, other: Self) -> Self
+    pub fn merge(mut self, mut other: Self) -> Self
     where
         P: PartialOrd,
     {
         let len = self.len() + other.len();
         let root = Self::merge_nodes(self.root, other.root);
+        
+        self.root = None;
+        other.root = None;
 
         Self { root, len }
     }
@@ -293,23 +297,25 @@ impl<K, P> Drop for PairingHeap<K, P> {
     fn drop(&mut self) {
         // Remove all children of a node, then the node itself.
         // Returns the next sibling in the end.
-        unsafe fn remove<K, P>(targ: NonNull<Inner<K, P>>) -> Option<NonNull<Inner<K, P>>> {
-            while let Some(left) = targ.as_ref().left {
-                (*targ.as_ptr()).left = remove(left);
+
+        unsafe fn remove<K, P>(targ: Option<NonNull<Inner<K, P>>>) -> Option<NonNull<Inner<K, P>>> {
+            if let Some(node) = targ {
+                while let Some(left) = node.as_ref().left {
+                    (*node.as_ptr()).left = remove(Some(left));
+                }
+                
+                let sibling = (*node.as_ptr()).right.take();
+                (*node.as_ptr()).parent = None;
+                Box::from_raw(node.as_ptr());
+                
+                sibling
+            } else {
+                None
             }
-
-            let sibling = (*targ.as_ptr()).right.take();
-            (*targ.as_ptr()).parent = None;
-            (*targ.as_ptr()).left = None;
-            Box::from_raw(targ.as_ptr());
-
-            sibling
         }
 
-        if let Some(node) = self.root {
-            unsafe {
-                remove(node);
-            }
+        unsafe {
+            remove(self.root);
         }
 
         self.root = None;
@@ -360,7 +366,7 @@ impl<K, P> Inner<K, P> {
         }
     }
 
-    fn into_value(self) -> (K, P) {
+    fn into_value(self: Box<Self>) -> (K, P) {
         (self.key, self.prio)
     }
 }

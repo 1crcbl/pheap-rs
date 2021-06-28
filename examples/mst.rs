@@ -5,7 +5,7 @@ use std::{
 
 use clap::{App, Arg};
 use pathfinding::prelude::kruskal;
-use pheap::{graph::SimpleGraph, mst_prim};
+use pheap::graph::{mst_prim, SimpleGraph};
 
 macro_rules! run_exp {
     ($runs:expr, $exe:stmt) => {

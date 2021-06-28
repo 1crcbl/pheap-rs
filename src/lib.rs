@@ -26,8 +26,7 @@
 mod ph;
 pub use ph::PairingHeap;
 
-mod exp;
-pub use exp::alg::mst_prim;
-pub use exp::graph;
+/// Experimental API for graph analysis.
+pub mod graph;
 
 mod tests;
